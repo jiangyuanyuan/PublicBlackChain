@@ -7,19 +7,30 @@ import (
 	"math/big"
 )
 
-const targetBit = 16 //挖矿难度
+const targetBit = 20 //挖矿难度
 type ProofOfWork struct {
 	Block  *Block
 	target *big.Int //1左位移生成做对比的
 }
 
 func NewProofOfWork(block *Block) *ProofOfWork {
+
 	target := big.NewInt(1)
 
 	target = target.Lsh(target, 256-targetBit) //左移  生成对比值
 
 	return &ProofOfWork{block, target}
 }
+
+func (pow *ProofOfWork) IsValid() bool {
+	var hashInt big.Int
+	hashInt.SetBytes(pow.Block.Hash)
+	if pow.target.Cmp(&hashInt) == 1 {
+		return true
+	}
+	return false
+}
+
 func (pow *ProofOfWork) Run() ([]byte, int64) {
 	//1、拼接block所以属性
 	//2、判断hash是否满足难度
@@ -43,9 +54,9 @@ func (pow *ProofOfWork) Run() ([]byte, int64) {
 
 		nonce = nonce + 1
 	}
-
 	return hash[:], int64(nonce)
 }
+
 func (pow *ProofOfWork) prepareData(nonce int) []byte {
 	//5、拼接
 	blockBytes := bytes.Join(
@@ -58,6 +69,5 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 		[]byte{})
 	// 生成hash
 	hash := sha256.Sum256(blockBytes)
-
 	return hash[:]
 }

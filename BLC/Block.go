@@ -3,7 +3,9 @@ package BLC
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/gob"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 )
@@ -49,6 +51,27 @@ func NewBlock(Height int64, PreHash []byte, data string) *Block {
 	return block
 }
 
+//序列化  便于存储到db中
+func (block *Block) Serialize() []byte {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	err := encoder.Encode(block)
+	if err != nil {
+		log.Panic(err)
+	}
+	return result.Bytes()
+}
+
+//反序列化 db中取出的byte 生成block对象
+func DeSerializeBlock(blockBytes []byte) *Block {
+	var block Block
+	decoder := gob.NewDecoder(bytes.NewReader(blockBytes))
+	err := decoder.Decode(&block)
+	if err != nil {
+		log.Panic(err)
+	}
+	return &block
+}
 func (block *Block) SetHash() {
 	//拼接所以属性生成Hash
 
