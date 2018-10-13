@@ -17,10 +17,11 @@ type Block struct {
 	Data []byte
 	//区块Hash
 	Hash []byte
-	//挖矿所需的
-	//Nonce int64
+
 	//交易时间戳
 	TimesTamp int64
+	//挖矿所需的
+	Nonce int64
 }
 
 //创建创世区块
@@ -31,9 +32,20 @@ func CreateGenensisBlock(data string) *Block {
 
 //创建一个区块
 func NewBlock(Height int64, PreHash []byte, data string) *Block {
-	block := &Block{Height, PreHash, []byte(data), nil, time.Now().Unix()}
-	block.SetHash()
+	//创建区块对象
+	block := &Block{Height, PreHash, []byte(data), nil, time.Now().Unix(), 0}
+	//设置Hash
+	//block.SetHash()
+
+	//工作量证明   生成有效Hash、nonce值
+	pow := NewProofOfWork(block)
+	hash, nonce := pow.Run()
+	block.Hash = hash[:]
+	block.Nonce = nonce
+
 	fmt.Println(block)
+	fmt.Println(hash)
+	fmt.Println(nonce)
 	return block
 }
 
