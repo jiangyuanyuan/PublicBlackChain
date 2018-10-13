@@ -31,9 +31,10 @@ func CreateGenensisBlock(data string) *Block {
 
 //创建一个区块
 func NewBlock(Height int64, PreHash []byte, data string) *Block {
-	Block := &Block{Height, PreHash, []byte(data), nil, time.Now().Unix()}
-	Block.SetHash()
-	return Block
+	block := &Block{Height, PreHash, []byte(data), nil, time.Now().Unix()}
+	block.SetHash()
+	fmt.Println(block)
+	return block
 }
 
 func (block *Block) SetHash() {
@@ -41,7 +42,7 @@ func (block *Block) SetHash() {
 
 	//1、Height 转换 []byte数组
 	heighBytes := IntToHex(block.Height)
-	fmt.Println(heighBytes)
+	//fmt.Println(heighBytes)
 	//2、preHash 转换 []byte数组
 
 	//3、data 转换 []byte数组
@@ -49,7 +50,7 @@ func (block *Block) SetHash() {
 	//4、TimesTamp 转换 []byte数组
 	timeString := strconv.FormatInt(block.TimesTamp, 2)
 	timeBytes := []byte(timeString)
-	fmt.Println(timeBytes)
+	//fmt.Println(timeBytes)
 	//5、拼接
 	blockBytes := bytes.Join([][]byte{heighBytes, block.PreHash, block.Data, block.Hash, timeBytes}, []byte{})
 	// 生成hash
