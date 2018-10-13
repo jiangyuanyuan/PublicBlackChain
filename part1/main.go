@@ -1,7 +1,7 @@
 package main
 
 import (
-	"PublicBlackChain/BLC"
+	"PublicBlackChain/part1/BLC"
 	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
