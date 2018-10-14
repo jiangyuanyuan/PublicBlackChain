@@ -129,3 +129,24 @@ func (blc *BlockChain) PrintChain() {
 
 	}
 }
+func (blc *BlockChain) Iterator() *BlockChainIterator {
+	db, err := bolt.Open(dbName, 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &BlockChainIterator{blc.Tip, db}
+}
+func (blc *BlockChain) PrintChainIterator() {
+	blockChainIterator := blc.Iterator()
+	defer blockChainIterator.DB.Close()
+	var hashInt big.Int
+	var genensis = big.NewInt(0)
+	for {
+		block := blockChainIterator.Next()
+		hashInt.SetBytes(block.PreHash)
+		fmt.Println(block)
+		if genensis.Cmp(&hashInt) == 0 {
+			break
+		}
+	}
+}
