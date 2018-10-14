@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+//迭代器结构体
 type BlockChainIterator struct {
 	CurrentHash []byte
 	DB          *bolt.DB

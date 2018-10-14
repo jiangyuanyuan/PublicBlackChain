@@ -17,7 +17,6 @@ type BlockChain struct {
 	//加入db 持久存储
 	Tip []byte   //最新区块的hash
 	DB  *bolt.DB //DB
-
 }
 
 //创建创世区块链
@@ -54,6 +53,7 @@ func CreatBlockChainWithGenensis() *BlockChain {
 	return &BlockChain{blockHash, db}
 }
 
+//添加到区块到DB中
 func (blc *BlockChain) AddBlockToBlockChain(data string) {
 	//创建新区块
 	//block := NewBlock(height, preHash, data)
@@ -129,6 +129,8 @@ func (blc *BlockChain) PrintChain() {
 
 	}
 }
+
+//迭代器
 func (blc *BlockChain) Iterator() *BlockChainIterator {
 	db, err := bolt.Open(dbName, 0600, nil)
 	if err != nil {
@@ -136,6 +138,8 @@ func (blc *BlockChain) Iterator() *BlockChainIterator {
 	}
 	return &BlockChainIterator{blc.Tip, db}
 }
+
+//迭代遍历
 func (blc *BlockChain) PrintChainIterator() {
 	blockChainIterator := blc.Iterator()
 	defer blockChainIterator.DB.Close()
