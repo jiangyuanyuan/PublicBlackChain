@@ -14,8 +14,7 @@ func main() {
 	//blockchain.PrintChainIterator()
 
 	//2、终端工具
-	blockchain := BLC.CreatBlockChainWithGenensis()
-	CLI := BLC.CLI{blockchain}
+	CLI := BLC.CLI{}
 	CLI.RUN()
 
 }

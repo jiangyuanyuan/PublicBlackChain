@@ -7,7 +7,7 @@ import (
 	"math/big"
 )
 
-const targetBit = 20 //挖矿难度
+const targetBit = 16 //挖矿难度
 type ProofOfWork struct {
 	Block  *Block
 	target *big.Int //1左位移生成做对比的
