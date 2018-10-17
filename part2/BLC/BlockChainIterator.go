@@ -11,16 +11,16 @@ type BlockChainIterator struct {
 	DB          *bolt.DB
 }
 
-func (blockchanIterator *BlockChainIterator) Next() (block *Block) {
+func (blockchainIterator *BlockChainIterator) Next() (block *Block) {
 
-	err := blockchanIterator.DB.View(func(tx *bolt.Tx) error {
+	err := blockchainIterator.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
 		if b != nil {
-			currentBlockBytes := b.Get(blockchanIterator.CurrentHash)
+			currentBlockBytes := b.Get(blockchainIterator.CurrentHash)
 
 			block = DeSerializeBlock(currentBlockBytes)
 
-			blockchanIterator.CurrentHash = block.PreHash
+			blockchainIterator.CurrentHash = block.PreHash
 
 		}
 
