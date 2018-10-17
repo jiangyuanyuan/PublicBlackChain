@@ -9,5 +9,5 @@ GO语言简单实现BlockChain区块链公链，POW工作量证明，UTXO未使�
 ## 进度
 * pow工作量证明          OK
 * 终端工具                OK
-* UTXO未使用交易输出        codeing
+* UTXO未使用交易输出        coding
 * P2P网络模型             NO
