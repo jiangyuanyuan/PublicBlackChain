@@ -10,6 +10,10 @@ import (
 type CLI struct {
 }
 
+func (cli *CLI) Send(from []string, to []string, acount []string) {
+	GetBlockChainObj().MineNewBlock(from, to, acount)
+}
+
 func (cli *CLI) AddBlock(data string) {
 	GetBlockChainObj().AddBlockToBlockChain(data)
 }
@@ -25,15 +29,17 @@ func (cli *CLI) CreatBlockChainWithGenensis(data string) {
 func (cli *CLI) RUN() {
 
 	isValidArgs()
-	addBlockCmd := flag.NewFlagSet("add", flag.ExitOnError)
+	sendBlockCmd := flag.NewFlagSet("send", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("print", flag.ExitOnError)
 	createChainCmd := flag.NewFlagSet("create", flag.ExitOnError)
 
-	flagAddData := addBlockCmd.String("d", "freedom", "交易数据")
+	flagFromData := sendBlockCmd.String("from", "", "输入地址")
+	flagToData := sendBlockCmd.String("to", "", "输出地址")
+	flagAcountData := sendBlockCmd.String("d", "交易数据", "交易金额")
 	flagCreateGenensisData := createChainCmd.String("a", "Genensis Block ...", "创世区块地址值")
 	switch os.Args[1] {
-	case "add":
-		err := addBlockCmd.Parse(os.Args[2:])
+	case "send":
+		err := sendBlockCmd.Parse(os.Args[2:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -52,13 +58,16 @@ func (cli *CLI) RUN() {
 		os.Exit(1)
 	}
 
-	if addBlockCmd.Parsed() {
-		if *flagAddData == "" {
+	if sendBlockCmd.Parsed() {
+		if *flagFromData == "" || *flagToData == "" || *flagAcountData == "" {
 			printUsage()
 			os.Exit(1)
 		}
-		fmt.Println(*flagAddData)
-		cli.AddBlock(*flagAddData)
+		fmt.Println(*flagFromData)
+		fmt.Println(*flagToData)
+		fmt.Println(*flagFromData)
+
+		cli.Send(JSONToArray(*flagFromData), JSONToArray(*flagToData), JSONToArray(*flagAcountData))
 	}
 
 	if printChainCmd.Parsed() {
@@ -78,12 +87,12 @@ func (cli *CLI) RUN() {
 
 func printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println("\tadd -d DATA - 交易数据")
-	fmt.Println("\tcreate -d DATA - 创世区块")
+	fmt.Println("\tsend -from Address -to Address -d Acount")
+	fmt.Println("\tcreate -a Address - 创世区块")
 	fmt.Println("\tprint - 打印信息")
-	fmt.Println("Usage:")
 
 }
+
 func isValidArgs() {
 	if len(os.Args) < 2 {
 		printUsage()

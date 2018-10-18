@@ -51,6 +51,42 @@ func CreatBlockChainWithGenensisCLI(data string) {
 
 }
 
+//转账
+func (blc *BlockChain) MineNewBlock(from []string, to []string, acount []string) {
+	//通过相关算法建立Transaction数组
+	var txs []*Transaction
+
+	//添加到DB中
+	err := blc.DB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		if b == nil {
+			_, err := tx.CreateBucket([]byte(bucketName))
+			if err != nil {
+				log.Panic(err)
+			}
+		}
+		//取出最顶的block
+		blockBytes := b.Get(blc.Tip)
+		preBlock := BLC.DeSerializeBlock(blockBytes)
+		//创建新区块
+		block := NewBlock(preBlock.Height+1, preBlock.Hash, txs)
+		err := b.Put([]byte(block.Hash), block.Serialize())
+		if err != nil {
+			log.Panic(err)
+		}
+		err = b.Put([]byte("l"), block.Hash)
+		blc.Tip = block.Hash
+		if err != nil {
+			log.Panic(err)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Panic(err)
+	}
+	defer blc.DB.Close()
+}
+
 //添加到区块到DB中
 func (blc *BlockChain) AddBlockToBlockChain(data string) {
 
@@ -63,7 +99,7 @@ func (blc *BlockChain) AddBlockToBlockChain(data string) {
 				log.Panic(err)
 			}
 		}
-		//取出最
+		//取出最顶的block
 		blockBytes := b.Get(blc.Tip)
 		preBlock := BLC.DeSerializeBlock(blockBytes)
 		//创建新区块

@@ -29,6 +29,15 @@ func NewCoinBaseTransaction(addr string) *Transaction {
 	return txCoinBase
 }
 
+////2、正常交易
+//func NewNormalTransaction(from string,to string,value int) *Transaction {
+//	txInput := &TXInput{[]byte{}, -1, "Genensis Data"}
+//	txOutput := &TXOutput{value, to}
+//	txCoinBase := &Transaction{[]byte{}, []*TXInput{txInput}, []*TXOutput{txOutput}}
+//	txCoinBase.TxHash = HashTransaction(txCoinBase)
+//	return txCoinBase
+//}
+
 //交易生成hash
 func HashTransaction(tx *Transaction) []byte {
 	var result bytes.Buffer
