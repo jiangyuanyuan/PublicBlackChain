@@ -1,6 +1,6 @@
 package BLC
 
 type TXOutput struct {
-	Value        int64
+	Value        string
 	ScriptPubKey string
 }

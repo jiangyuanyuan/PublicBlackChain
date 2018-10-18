@@ -1,6 +1,6 @@
 package main
 
-import "PublicBlackChain/part2/BLC"
+import "PublicBlackChain/part3/BLC"
 
 func main() {
 

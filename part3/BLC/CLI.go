@@ -14,8 +14,8 @@ func (cli *CLI) Send(from []string, to []string, acount []string) {
 	GetBlockChainObj().MineNewBlock(from, to, acount)
 }
 
-func (cli *CLI) AddBlock(data string) {
-	GetBlockChainObj().AddBlockToBlockChain(data)
+func (cli *CLI) GetBalance(from string) {
+	GetBlockChainObj().UnSpentTransationsWithAddress(from)
 }
 
 func (cli *CLI) PrintChain() {
@@ -32,11 +32,13 @@ func (cli *CLI) RUN() {
 	sendBlockCmd := flag.NewFlagSet("send", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("print", flag.ExitOnError)
 	createChainCmd := flag.NewFlagSet("create", flag.ExitOnError)
+	getBalanceCmd := flag.NewFlagSet("get", flag.ExitOnError)
 
 	flagFromData := sendBlockCmd.String("from", "", "输入地址")
 	flagToData := sendBlockCmd.String("to", "", "输出地址")
 	flagAcountData := sendBlockCmd.String("d", "交易数据", "交易金额")
 	flagCreateGenensisData := createChainCmd.String("a", "Genensis Block ...", "创世区块地址值")
+	flagGetBalanceData := getBalanceCmd.String("a", "", "")
 	switch os.Args[1] {
 	case "send":
 		err := sendBlockCmd.Parse(os.Args[2:])
@@ -53,6 +55,11 @@ func (cli *CLI) RUN() {
 		if err != nil {
 			log.Panic(err)
 		}
+	case "get":
+		err := getBalanceCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
 	default:
 		printUsage()
 		os.Exit(1)
@@ -65,8 +72,7 @@ func (cli *CLI) RUN() {
 		}
 		fmt.Println(*flagFromData)
 		fmt.Println(*flagToData)
-		fmt.Println(*flagFromData)
-
+		fmt.Println(*flagAcountData)
 		cli.Send(JSONToArray(*flagFromData), JSONToArray(*flagToData), JSONToArray(*flagAcountData))
 	}
 
@@ -83,13 +89,23 @@ func (cli *CLI) RUN() {
 		fmt.Println(*flagCreateGenensisData)
 		cli.CreatBlockChainWithGenensis(*flagCreateGenensisData)
 	}
+
+	if getBalanceCmd.Parsed() {
+		if *flagGetBalanceData == "" {
+			printUsage()
+			os.Exit(1)
+		}
+		fmt.Println(*flagGetBalanceData)
+		cli.GetBalance(*flagGetBalanceData)
+	}
 }
 
 func printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("\tsend -from Address -to Address -d Acount")
-	fmt.Println("\tcreate -a Address - 创世区块")
-	fmt.Println("\tprint - 打印信息")
+	fmt.Println("\tcreate -a Address - 创世区块地址值")
+	fmt.Println("\tget -a Address - 获取地址值的余额")
+	fmt.Println("\tprint - 打印所有区块信息")
 
 }
 
