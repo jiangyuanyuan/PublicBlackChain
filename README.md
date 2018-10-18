@@ -1,10 +1,12 @@
 # PublicBlackChain
-GO语言简单实现BlockChain区块链公链，POW工作量证明，UTXO未使用交易输出，P2P网络模型（后面再写）
+GO语言简单实现BlockChain区块链公链，POW工作量证明，UTXO未使用交易输出模型，P2P网络模型（后面再写）
 # 持续更新中。。。
 ### part1 
 * BlockChain 存储为内存数组 简单实现
 ### part2
 * BlcokChain 存储为blotdb
+### part3
+* BlcokChain UTXO未使用交易输出模型
 
 ## 进度
 * pow工作量证明          OK
