@@ -8,7 +8,6 @@ import (
 )
 
 type CLI struct {
-	//BlockChain *BlockChain
 }
 
 func (cli *CLI) AddBlock(data string) {
@@ -31,7 +30,7 @@ func (cli *CLI) RUN() {
 	createChainCmd := flag.NewFlagSet("create", flag.ExitOnError)
 
 	flagAddData := addBlockCmd.String("d", "freedom", "交易数据")
-	flagCreateGenensisData := createChainCmd.String("d", "Genensis Block ...", "创世区块")
+	flagCreateGenensisData := createChainCmd.String("a", "Genensis Block ...", "创世区块地址值")
 	switch os.Args[1] {
 	case "add":
 		err := addBlockCmd.Parse(os.Args[2:])

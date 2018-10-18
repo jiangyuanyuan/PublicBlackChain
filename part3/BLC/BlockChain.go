@@ -6,7 +6,6 @@ import (
 	"github.com/boltdb/bolt"
 	"log"
 	"math/big"
-	"os"
 )
 
 const dbName = "block.db"
@@ -16,52 +15,6 @@ type BlockChain struct {
 	//加入db 持久存储
 	Tip []byte   //最新区块的hash
 	DB  *bolt.DB //DB
-}
-
-//创建创世区块链
-func CreatBlockChainWithGenensis() (blcokChain *BlockChain) {
-	db, err := bolt.Open(dbName, 0600, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if !dbExists() {
-		fmt.Println("创世区块已经存在...")
-		err = db.View(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte(bucketName))
-			blockHash := b.Get([]byte("l"))
-			blcokChain = &BlockChain{blockHash, db}
-			return nil
-		})
-	} else {
-		var blockHash []byte
-		err = db.Update(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte(bucketName))
-			if b == nil {
-				b, err = tx.CreateBucket([]byte(bucketName))
-				if err != nil {
-					log.Panic(err)
-				}
-			}
-			genensisBlock := CreateGenensisBlock("Genensis block ...")
-			err = b.Put([]byte(genensisBlock.Hash), genensisBlock.Serialize())
-			if err != nil {
-				log.Panic(err)
-			}
-			blockHash = genensisBlock.Hash
-			err = b.Put([]byte("l"), genensisBlock.Hash)
-			blcokChain = &BlockChain{blockHash, db}
-			if err != nil {
-				log.Panic(err)
-			}
-			return nil
-		})
-		if err != nil {
-			log.Panic(err)
-		}
-
-	}
-	defer db.Close()
-	return blcokChain
 }
 
 //创建创世区块链
@@ -78,7 +31,9 @@ func CreatBlockChainWithGenensisCLI(data string) {
 				log.Panic(err)
 			}
 		}
-		genensisBlock := CreateGenensisBlock(data)
+		//创建一个基础交易
+		transaction := NewCoinBaseTransaction(data)
+		genensisBlock := CreateGenensisBlock([]*Transaction{transaction})
 		err = b.Put([]byte(genensisBlock.Hash), genensisBlock.Serialize())
 		if err != nil {
 			log.Panic(err)
@@ -97,7 +52,7 @@ func CreatBlockChainWithGenensisCLI(data string) {
 }
 
 //添加到区块到DB中
-func (blc *BlockChain) AddBlockToBlockChain(txs []*Transaction) {
+func (blc *BlockChain) AddBlockToBlockChain(data string) {
 
 	//添加到DB中
 	err := blc.DB.Update(func(tx *bolt.Tx) error {
@@ -112,7 +67,8 @@ func (blc *BlockChain) AddBlockToBlockChain(txs []*Transaction) {
 		blockBytes := b.Get(blc.Tip)
 		preBlock := BLC.DeSerializeBlock(blockBytes)
 		//创建新区块
-		block := NewBlock(preBlock.Height+1, preBlock.Hash, txs)
+
+		block := NewBlock(preBlock.Height+1, preBlock.Hash, []*Transaction{})
 		err := b.Put([]byte(block.Hash), block.Serialize())
 		if err != nil {
 			log.Panic(err)
@@ -126,35 +82,6 @@ func (blc *BlockChain) AddBlockToBlockChain(txs []*Transaction) {
 	})
 	if err != nil {
 		log.Panic(err)
-	}
-	defer blc.DB.Close()
-}
-
-//遍历所有区块信息
-func (blc *BlockChain) PrintChain() {
-	var block *Block
-	var currentHash []byte = blc.Tip
-	var genensisHashBytes = big.NewInt(0)
-	for {
-		err := blc.DB.View(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte(bucketName))
-			if b != nil {
-				blockBytes := b.Get(currentHash)
-				block = DeSerializeBlock(blockBytes)
-				fmt.Println(block)
-			}
-			return nil
-
-		})
-		if err != nil {
-			log.Panic(err)
-		}
-		var hashInt big.Int
-		hashInt.SetBytes(block.PreHash)
-		if genensisHashBytes.Cmp(&hashInt) == 0 {
-			break
-		}
-		currentHash = block.PreHash
 	}
 	defer blc.DB.Close()
 }
@@ -198,11 +125,4 @@ func (blc *BlockChain) PrintChainIterator() {
 			break
 		}
 	}
-}
-
-func dbExists() bool {
-	if _, err := os.Stat(dbName); os.IsExist(err) {
-		return false
-	}
-	return true
 }

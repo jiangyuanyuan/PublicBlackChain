@@ -27,6 +27,7 @@ type Block struct {
 
 //创建创世区块
 func CreateGenensisBlock(txs []*Transaction) *Block {
+
 	return NewBlock(1, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, txs)
 
 }
