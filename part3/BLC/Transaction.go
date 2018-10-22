@@ -19,6 +19,12 @@ type Transaction struct {
 	Vouts []*TXOutput
 }
 
+//是否是创世区块的交易
+func (tx *Transaction) IsConbaseTransaction() bool {
+
+	return len(tx.Vins[0].TxHash) == 0 && tx.Vins[0].Vout == -1
+}
+
 //创建Transation区分2种情况
 //1、创世区块的 input为空的
 func NewCoinBaseTransaction(addr string) *Transaction {
@@ -35,7 +41,7 @@ func NewNormalTransaction(from string, to string, value string) *Transaction {
 	//转账命令：./cli send -from '["freedom"]' -to '["hope"]' -d '["10"]'
 
 	//1、form这个address所有的未话费交易输出的Transaction
-	unSpentTx := UnSpentTransationsWithAddress(from)
+	unSpentTx := GetBlockChainObj().UnUTXOs(from)
 	fmt.Println(unSpentTx)
 
 	var txInputs []*TXInput

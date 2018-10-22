@@ -2,6 +2,7 @@ package BLC
 
 import (
 	"PublicBlackChain/part1/BLC"
+	"encoding/hex"
 	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
@@ -113,25 +114,67 @@ func GetBlockChainObj() *BlockChain {
 }
 
 //返回该地址下所有未花费交易输出
-func (blc *BlockChain) UnSpentTransationsWithAddress(address string) []*Transaction {
+func (blc *BlockChain) UnUTXOs(address string) []*TXOutput {
 	blockChainIterator := blc.Iterator()
 	defer blockChainIterator.DB.Close()
 	var hashInt big.Int
 	var genensis = big.NewInt(0)
-	var unSpentTxs []*Transaction
+	var unUTXOs []*TXOutput
+	var spentTXOutputs = make(map[string][]int64)
 	for {
 		block := blockChainIterator.Next()
 		hashInt.SetBytes(block.PreHash)
+		fmt.Println(block)
 
 		for _, tx := range block.txs {
-			//todo
+			if tx.IsConbaseTransaction() == false {
+				for _, in := range tx.Vins {
+					if in.UnLockWithAddress(address) {
+						key := hex.EncodeToString(in.TxHash)
+
+						spentTXOutputs[key] = append(spentTXOutputs[key], in.Vout)
+
+					}
+				}
+			}
+
+			for index, out := range tx.Vouts {
+				if out.UnLockWithAddress(address) {
+					if spentTXOutputs != nil {
+						if len(spentTXOutputs) != 0 {
+							for txHash, indexArray := range spentTXOutputs {
+								for _, i := range indexArray {
+									if int64(index) == i && txHash == hex.EncodeToString(tx.TxHash) {
+										continue
+									} else {
+										unUTXOs = append(unUTXOs, out)
+									}
+								}
+							}
+						} else {
+							unUTXOs = append(unUTXOs, out)
+						}
+
+					}
+				}
+			}
+
 		}
 
 		if genensis.Cmp(&hashInt) == 0 {
 			break
 		}
 	}
-	return nil
+	return unUTXOs
+}
+
+//查询余额
+func (blc *BlockChain) GetBalance(address string) (amount int64) {
+	utxos := blc.UnUTXOs(address)
+	for _, out := range utxos {
+		amount = amount + out.Value
+	}
+	return
 }
 
 //迭代器
