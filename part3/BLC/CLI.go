@@ -15,7 +15,7 @@ func (cli *CLI) Send(from []string, to []string, acount []string) {
 }
 
 func (cli *CLI) GetBalance(from string) {
-	GetBlockChainObj().UnSpentTransationsWithAddress(from)
+	GetBlockChainObj().UnUTXOs(from)
 }
 
 func (cli *CLI) PrintChain() {

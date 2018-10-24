@@ -2,6 +2,6 @@ package BLC
 
 type UTXO struct {
 	TxHash []byte
-	Index  int
+	Index  int64
 	Output *TXOutput
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/boltdb/bolt"
 	"log"
 	"math/big"
+	"os"
+	"strconv"
 )
 
 const dbName = "block.db"
@@ -57,8 +59,9 @@ func (blc *BlockChain) MineNewBlock(from []string, to []string, acount []string)
 	//通过相关算法建立Transaction数组
 	var txs []*Transaction
 
+	value, _ := strconv.Atoi(acount[0])
 	//建立一笔转账
-	tx := NewNormalTransaction(from[0], to[0], acount[0])
+	tx := NewNormalTransaction(from[0], to[0], int64(value))
 
 	txs = append(txs, tx)
 
@@ -114,12 +117,14 @@ func GetBlockChainObj() *BlockChain {
 }
 
 //返回该地址下所有未花费交易输出
-func (blc *BlockChain) UnUTXOs(address string) []*TXOutput {
+func (blc *BlockChain) UnUTXOs(address string) []*UTXO {
 	blockChainIterator := blc.Iterator()
 	defer blockChainIterator.DB.Close()
+
+	var unUTXOs []*UTXO
+
 	var hashInt big.Int
 	var genensis = big.NewInt(0)
-	var unUTXOs []*TXOutput
 	var spentTXOutputs = make(map[string][]int64)
 	for {
 		block := blockChainIterator.Next()
@@ -147,12 +152,14 @@ func (blc *BlockChain) UnUTXOs(address string) []*TXOutput {
 									if int64(index) == i && txHash == hex.EncodeToString(tx.TxHash) {
 										continue
 									} else {
-										unUTXOs = append(unUTXOs, out)
+										utxo := &UTXO{tx.TxHash, index, out}
+										unUTXOs = append(unUTXOs, utxo)
 									}
 								}
 							}
 						} else {
-							unUTXOs = append(unUTXOs, out)
+							utxo := &UTXO{tx.TxHash, index, out}
+							unUTXOs = append(unUTXOs, utxo)
 						}
 
 					}
@@ -168,11 +175,35 @@ func (blc *BlockChain) UnUTXOs(address string) []*TXOutput {
 	return unUTXOs
 }
 
+func (blc *BlockChain) FindSpendableUTXOS(from string, amount int64) (int64, map[string][]int64) {
+
+	//获取我所以的钱UTXO
+	utxos := blc.UnUTXOs(from)
+
+	var value int64
+	var unSpendableUTXOS = make(map[string][]int64)
+	for _, utxo := range utxos {
+		value = value + utxo.Output.Value
+		hash := hex.EncodeToString(utxo.TxHash)
+		unSpendableUTXOS[hash] = append(unSpendableUTXOS[hash], utxo.Index)
+
+		if value >= amount {
+			break
+		}
+	}
+
+	if value < amount {
+		fmt.Println("余额不足")
+		os.Exit(1)
+	}
+	return value, unSpendableUTXOS
+}
+
 //查询余额
 func (blc *BlockChain) GetBalance(address string) (amount int64) {
 	utxos := blc.UnUTXOs(address)
-	for _, out := range utxos {
-		amount = amount + out.Value
+	for _, utxo := range utxos {
+		amount = amount + utxo.Output.Value
 	}
 	return
 }
