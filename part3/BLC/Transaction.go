@@ -37,15 +37,15 @@ func NewCoinBaseTransaction(addr string) *Transaction {
 }
 
 //2、正常交易
-func NewNormalTransaction(from string, to string, value int64) *Transaction {
+func NewNormalTransaction(from string, to string, value int64, txs []*Transaction) *Transaction {
 
 	//转账命令：./cli send -from '["freedom"]' -to '["hope"]' -d '["10"]'
 
 	//1、form这个address所有的未话费交易输出的Transaction
-	unUtxo := GetBlockChainObj().UnUTXOs(from)
+	unUtxo := GetBlockChainObj().UnUTXOs(from, txs)
 	fmt.Println(unUtxo)
 
-	money, unUtxoDic := GetBlockChainObj().FindSpendableUTXOS(from, value)
+	money, unUtxoDic := GetBlockChainObj().FindSpendableUTXOS(from, value, txs)
 
 	var txInputs []*TXInput
 	var txOutputs []*TXOutput

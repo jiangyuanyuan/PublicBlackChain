@@ -61,9 +61,11 @@ func (blc *BlockChain) MineNewBlock(from []string, to []string, acount []string)
 
 	value, _ := strconv.Atoi(acount[0])
 	//建立一笔转账
-	tx := NewNormalTransaction(from[0], to[0], int64(value))
-
-	txs = append(txs, tx)
+	for _, address := range from {
+		tx := NewNormalTransaction(address, to[0], int64(value), txs)
+		txs = append(txs, tx)
+		fmt.Println(tx)
+	}
 
 	//添加到DB中
 	err := blc.DB.Update(func(tx *bolt.Tx) error {
@@ -117,7 +119,7 @@ func GetBlockChainObj() *BlockChain {
 }
 
 //返回该地址下所有未花费交易输出
-func (blc *BlockChain) UnUTXOs(address string) []*UTXO {
+func (blc *BlockChain) UnUTXOs(address string, txs []*Transaction) []*UTXO {
 	blockChainIterator := blc.Iterator()
 	defer blockChainIterator.DB.Close()
 
@@ -126,6 +128,56 @@ func (blc *BlockChain) UnUTXOs(address string) []*UTXO {
 	var hashInt big.Int
 	var genensis = big.NewInt(0)
 	var spentTXOutputs = make(map[string][]int64)
+
+	for _, tx := range txs {
+		if tx.IsConbaseTransaction() == false {
+			for _, in := range tx.Vins {
+				if in.UnLockWithAddress(address) {
+					key := hex.EncodeToString(in.TxHash)
+
+					spentTXOutputs[key] = append(spentTXOutputs[key], in.Vout)
+
+				}
+			}
+		}
+
+	}
+
+	for _, tx := range txs {
+	work1:
+		for index, out := range tx.Vouts {
+			if out.UnLockWithAddress(address) {
+				if len(spentTXOutputs) == 0 {
+					utxo := &UTXO{tx.TxHash, int64(index), out}
+					unUTXOs = append(unUTXOs, utxo)
+				} else {
+					for hash, indexArray := range spentTXOutputs {
+						txHashStr := hex.EncodeToString(tx.TxHash)
+						if txHashStr == hash {
+							var isUtxo bool
+							for _, outIndex := range indexArray {
+								if outIndex == int64(index) {
+									isUtxo = true
+									continue work1
+								}
+
+								if isUtxo == false {
+									utxo := &UTXO{tx.TxHash, int64(index), out}
+									unUTXOs = append(unUTXOs, utxo)
+								}
+							}
+						} else {
+							utxo := &UTXO{tx.TxHash, int64(index), out}
+							unUTXOs = append(unUTXOs, utxo)
+						}
+					}
+				}
+
+			}
+
+		}
+	}
+
 	for {
 		block := blockChainIterator.Next()
 		hashInt.SetBytes(block.PreHash)
@@ -142,23 +194,27 @@ func (blc *BlockChain) UnUTXOs(address string) []*UTXO {
 					}
 				}
 			}
-
+		work2:
 			for index, out := range tx.Vouts {
 				if out.UnLockWithAddress(address) {
 					if spentTXOutputs != nil {
 						if len(spentTXOutputs) != 0 {
+							var isSpentUTXO bool
 							for txHash, indexArray := range spentTXOutputs {
 								for _, i := range indexArray {
 									if int64(index) == i && txHash == hex.EncodeToString(tx.TxHash) {
-										continue
+										continue work2
 									} else {
-										utxo := &UTXO{tx.TxHash, index, out}
-										unUTXOs = append(unUTXOs, utxo)
+
 									}
 								}
 							}
+							if isSpentUTXO == false {
+								utxo := &UTXO{tx.TxHash, int64(index), out}
+								unUTXOs = append(unUTXOs, utxo)
+							}
 						} else {
-							utxo := &UTXO{tx.TxHash, index, out}
+							utxo := &UTXO{tx.TxHash, int64(index), out}
 							unUTXOs = append(unUTXOs, utxo)
 						}
 
@@ -175,10 +231,10 @@ func (blc *BlockChain) UnUTXOs(address string) []*UTXO {
 	return unUTXOs
 }
 
-func (blc *BlockChain) FindSpendableUTXOS(from string, amount int64) (int64, map[string][]int64) {
+func (blc *BlockChain) FindSpendableUTXOS(from string, amount int64, txs []*Transaction) (int64, map[string][]int64) {
 
 	//获取我所以的钱UTXO
-	utxos := blc.UnUTXOs(from)
+	utxos := blc.UnUTXOs(from, txs)
 
 	var value int64
 	var unSpendableUTXOS = make(map[string][]int64)
@@ -201,7 +257,7 @@ func (blc *BlockChain) FindSpendableUTXOS(from string, amount int64) (int64, map
 
 //查询余额
 func (blc *BlockChain) GetBalance(address string) (amount int64) {
-	utxos := blc.UnUTXOs(address)
+	utxos := blc.UnUTXOs(address, nil)
 	for _, utxo := range utxos {
 		amount = amount + utxo.Output.Value
 	}
